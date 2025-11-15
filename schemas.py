@@ -1,48 +1,39 @@
 """
-Database Schemas
+Database Schemas for Live Sports Auction App
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a MongoDB collection. The collection name is the
+lowercased class name by convention (e.g., Auction -> "auction").
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime
 
-# Example schemas (replace with your own):
+class SportsItem(BaseModel):
+    """Sports memorabilia or experience being auctioned"""
+    title: str = Field(..., description="Item title, e.g., 'Signed Jersey'"
+    )
+    description: Optional[str] = Field(None, description="Details about the item")
+    sport: Optional[str] = Field(None, description="Sport type, e.g., Football")
+    team: Optional[str] = Field(None, description="Associated team")
+    player: Optional[str] = Field(None, description="Associated player")
+    image_url: Optional[str] = Field(None, description="Primary image URL")
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class Bid(BaseModel):
+    """A bid placed on an auction"""
+    auction_id: str = Field(..., description="Auction ID")
+    bidder_name: str = Field(..., description="Display name for bidder")
+    amount: float = Field(..., gt=0, description="Bid amount")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Auction(BaseModel):
+    """Auction metadata"""
+    item_id: Optional[str] = Field(None, description="Reference to a SportsItem")
+    title: str = Field(..., description="Auction title")
+    description: Optional[str] = Field(None, description="Auction description")
+    image_url: Optional[str] = Field(None, description="Hero image for auction")
+    starting_price: float = Field(..., ge=0, description="Starting price")
+    current_price: Optional[float] = Field(None, ge=0, description="Cached current price")
+    start_time: datetime = Field(..., description="When the auction starts")
+    end_time: datetime = Field(..., description="When the auction ends")
+    status: str = Field("scheduled", description="scheduled | live | ended")
+    tags: List[str] = Field(default_factory=list, description="Searchable tags")
